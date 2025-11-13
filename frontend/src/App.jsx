@@ -1,36 +1,62 @@
 import { useEffect, useState } from "react";
 
-const headerCell = {
-  padding: "12px",
-  fontWeight: "bold",
-  borderBottom: "2px solid #dfe3eb",
-  color: "#111827",
-};
-
-const bodyCell = {
-  padding: "10px",
-  borderBottom: "1px solid #e2e2e2",
-  color: "#111827",
-};
-
 export default function App() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch("/stock_market_data.json")
-      .then((res) => res.json())
+    setLoading(true);
+    setError("");
+
+    fetch("http://localhost:5000/api/stocks")
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return res.json();
+      })
       .then((data) => {
-        setRows(Array.isArray(data) ? data : data.data || []);
+        console.log("Data from API:", data);
+        if (Array.isArray(data)) {
+          setRows(data);
+        } else {
+          setRows([]);
+        }
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Failed to load JSON:", err);
+        console.error("Failed to load data from API:", err);
+        setError("Failed to load data from server");
         setLoading(false);
       });
   }, []);
 
-  if (loading) {
+if (loading) {
+  return (
+    <div
+      style={{
+        height: "100vh",
+        width: "100vw",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#0f172a",
+        color: "#e5e7eb",
+        fontFamily: "Arial, sans-serif",
+        textAlign: "center",
+        margin: "0",
+        padding: "0",
+        boxSizing: "border-box",
+      }}
+    >
+      <p>Loading data...</p>
+    </div>
+  );
+}
+
+
+  if (error) {
     return (
       <div
         style={{
@@ -38,24 +64,27 @@ export default function App() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontFamily: "Arial, sans-serif",
           background: "#0f172a",
           color: "#e5e7eb",
+          fontFamily: "Arial, sans-serif",
         }}
       >
-        <p>Loading data...</p>
+        <p>{error}</p>
       </div>
     );
   }
+
+
+  const columns = rows.length > 0 ? Object.keys(rows[0]) : [];
 
   return (
     <div
       style={{
         minHeight: "100vh",
-        width: "100%",        
+        width: "100%",
         display: "flex",
         flexDirection: "column",
-        alignItems: "stretch",   
+        alignItems: "stretch",
         padding: "30px 20px",
         background: "#0f172a",
         color: "#e5e7eb",
@@ -63,19 +92,13 @@ export default function App() {
         boxSizing: "border-box",
       }}
     >
-      <h1
-        style={{
-          marginBottom: "20px",
-          color: "#e5e7eb",
-          textAlign: "center",
-        }}
-      >
-        📊 Stock Market Data (JSON Model)
+      <h1 style={{ textAlign: "center", marginBottom: "10px" }}>
+        Stock Market Data (SQL Model)
       </h1>
 
       <div
         style={{
-          width: "100%",         
+          width: "100%",
           background: "white",
           padding: "20px",
           borderRadius: "10px",
@@ -86,7 +109,7 @@ export default function App() {
       >
         <table
           style={{
-            width: "100%",        
+            width: "100%",
             borderCollapse: "collapse",
             tableLayout: "fixed",
             textAlign: "center",
@@ -94,31 +117,42 @@ export default function App() {
         >
           <thead>
             <tr style={{ backgroundColor: "#e5e7eb" }}>
-              <th style={headerCell}>Date</th>
-              <th style={headerCell}>Trade Code</th>
-              <th style={headerCell}>Open</th>
-              <th style={headerCell}>High</th>
-              <th style={headerCell}>Low</th>
-              <th style={headerCell}>Close</th>
-              <th style={headerCell}>Volume</th>
+              {columns.map((col) => (
+                <th
+                  key={col}
+                  style={{
+                    padding: "12px",
+                    fontWeight: "bold",
+                    borderBottom: "2px solid #dfe3eb",
+                    color: "#111827",
+                  }}
+                >
+                  {col}
+                </th>
+              ))}
             </tr>
           </thead>
-
           <tbody>
-            {rows.map((row, index) => (
+            {rows.map((row, rowIndex) => (
               <tr
-                key={index}
+                key={rowIndex}
                 style={{
-                  backgroundColor: index % 2 === 0 ? "#f9fafb" : "#ffffff",
+                  backgroundColor: rowIndex % 2 === 0 ? "#f9fafb" : "#ffffff",
                 }}
               >
-                <td style={bodyCell}>{row.date}</td>
-                <td style={bodyCell}>{row.trade_code}</td>
-                <td style={bodyCell}>{row.open}</td>
-                <td style={bodyCell}>{row.high}</td>
-                <td style={bodyCell}>{row.low}</td>
-                <td style={bodyCell}>{row.close}</td>
-                <td style={bodyCell}>{row.volume}</td>
+                {columns.map((col) => (
+                  <td
+                    key={col}
+                    style={{
+                      padding: "10px",
+                      borderBottom: "1px solid #e2e2e2",
+                      color: "#111827",
+                      wordBreak: "break-word",
+                    }}
+                  >
+                    {row[col]}
+                  </td>
+                ))}
               </tr>
             ))}
           </tbody>
