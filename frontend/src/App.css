@@ -1,42 +1,107 @@
+html,
+body,
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+.full-screen {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f172a;
+  color: #e5e7eb;
+  font-family: Arial, sans-serif;
   text-align: center;
+  box-sizing: border-box;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.app-root {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 30px 20px;
+  background: #0f172a;
+  color: #e5e7eb;
+  font-family: Arial, sans-serif;
+  box-sizing: border-box;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.app-title {
+  text-align: center;
+  margin-bottom: 20px;
 }
 
 .card {
-  padding: 2em;
+  width: 100%;
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  box-sizing: border-box;
 }
 
-.read-the-docs {
-  color: #888;
+.table-card {
+  margin-top: 20px;
+}
+
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  text-align: center;
+}
+
+.data-table thead tr {
+  background-color: #e5e7eb;
+}
+
+.data-table th {
+  padding: 12px;
+  font-weight: bold;
+  border-bottom: 2px solid #dfe3eb;
+  color: #111827;
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 10px;
+  border-bottom: 1px solid #e2e2e2;
+  color: #111827;
+  word-break: break-word;
+}
+
+.row-even {
+  background-color: #f9fafb;
+}
+
+.row-odd {
+  background-color: #ffffff;
+}
+
+.chart-controls {
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chart-label {
+  color: #111827;
+}
+
+.chart-select {
+  padding: 8px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
 }

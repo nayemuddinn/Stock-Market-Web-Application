@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import StockChart from "./components/StockChart";
+import "./App.css";
 
 export default function App() {
   const [rows, setRows] = useState([]);
@@ -8,155 +10,91 @@ export default function App() {
   useEffect(() => {
     setLoading(true);
     setError("");
-
     fetch("http://localhost:5000/api/stocks")
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Network response was not ok");
-        }
-        return res.json();
-      })
+      .then((res) => res.json())
       .then((data) => {
-        console.log("Data from API:", data);
-        if (Array.isArray(data)) {
-          setRows(data);
-        } else {
-          setRows([]);
-        }
+        const arr = (Array.isArray(data) ? data : []).map((row) => {
+          const d = new Date(row.date);
+          const valid = !isNaN(d.getTime());
+          const formatted = valid ? d.toISOString().slice(0, 10) : "";
+
+          return {
+            ...row,
+            date: formatted,
+          };
+        });
+
+        setRows(arr);
         setLoading(false);
       })
-      .catch((err) => {
-        console.error("Failed to load data from API:", err);
-        setError("Failed to load data from server");
+      .catch(() => {
+        setError("Failed to load data");
         setLoading(false);
       });
   }, []);
 
-if (loading) {
-  return (
-    <div
-      style={{
-        height: "100vh",
-        width: "100vw",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "#0f172a",
-        color: "#e5e7eb",
-        fontFamily: "Arial, sans-serif",
-        textAlign: "center",
-        margin: "0",
-        padding: "0",
-        boxSizing: "border-box",
-      }}
-    >
-      <p>Loading data...</p>
-    </div>
-  );
-}
-
+  if (loading) {
+    return (
+      <div className="full-screen">
+        <p>Loading data...</p>
+      </div>
+    );
+  }
 
   if (error) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#0f172a",
-          color: "#e5e7eb",
-          fontFamily: "Arial, sans-serif",
-        }}
-      >
+      <div className="full-screen">
         <p>{error}</p>
       </div>
     );
   }
 
-
-  const columns = rows.length > 0 ? Object.keys(rows[0]) : [];
+  if (!rows || rows.length === 0) {
+    return (
+      <div className="full-screen">
+        <p>No data available</p>
+      </div>
+    );
+  }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        width: "100%",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "stretch",
-        padding: "30px 20px",
-        background: "#0f172a",
-        color: "#e5e7eb",
-        fontFamily: "Arial, sans-serif",
-        boxSizing: "border-box",
-      }}
-    >
-      <h1 style={{ textAlign: "center", marginBottom: "10px" }}>
-        Stock Market Data (SQL Model)
-      </h1>
+    <div className="app-root">
+      <h1 className="app-title">Stock Market Data (SQL Model)</h1>
 
-      <div
-        style={{
-          width: "100%",
-          background: "white",
-          padding: "20px",
-          borderRadius: "10px",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
-          overflowX: "auto",
-          boxSizing: "border-box",
-        }}
-      >
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            tableLayout: "fixed",
-            textAlign: "center",
-          }}
-        >
-          <thead>
-            <tr style={{ backgroundColor: "#e5e7eb" }}>
-              {columns.map((col) => (
-                <th
-                  key={col}
-                  style={{
-                    padding: "12px",
-                    fontWeight: "bold",
-                    borderBottom: "2px solid #dfe3eb",
-                    color: "#111827",
-                  }}
-                >
-                  {col}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row, rowIndex) => (
-              <tr
-                key={rowIndex}
-                style={{
-                  backgroundColor: rowIndex % 2 === 0 ? "#f9fafb" : "#ffffff",
-                }}
-              >
-                {columns.map((col) => (
-                  <td
-                    key={col}
-                    style={{
-                      padding: "10px",
-                      borderBottom: "1px solid #e2e2e2",
-                      color: "#111827",
-                      wordBreak: "break-word",
-                    }}
-                  >
-                    {row[col]}
-                  </td>
-                ))}
+      <StockChart rows={rows} />
+
+      <div className="card table-card">
+        <div className="table-wrapper">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>date</th>
+                <th>trade_code</th>
+                <th>open</th>
+                <th>high</th>
+                <th>low</th>
+                <th>close</th>
+                <th>volume</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rows.map((row, index) => (
+                <tr
+                  key={index}
+                  className={index % 2 === 0 ? "row-even" : "row-odd"}
+                >
+                  <td>{row.date}</td>
+                  <td>{row.trade_code}</td>
+                  <td>{row.open}</td>
+                  <td>{row.high}</td>
+                  <td>{row.low}</td>
+                  <td>{row.close}</td>
+                  <td>{row.volume}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
