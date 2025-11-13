@@ -30,23 +30,29 @@ export default function App() {
       });
   }, []);
 
-  if (loading) {
-    return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontFamily: "Arial, sans-serif",
-          background: "#0f172a",
-          color: "#e5e7eb",
-        }}
-      >
-        <p>Loading data...</p>
-      </div>
-    );
-  }
+if (loading) {
+  return (
+    <div
+      style={{
+        height: "100vh",
+        width: "100vw",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#0f172a",
+        color: "#e5e7eb",
+        fontFamily: "Arial, sans-serif",
+        textAlign: "center",
+        margin: 0,
+        padding: 0,
+        boxSizing: "border-box",
+      }}
+    >
+      <p>Loading data...</p>
+    </div>
+  );
+}
+
 
   return (
     <div
