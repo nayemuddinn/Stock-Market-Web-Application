@@ -12,6 +12,8 @@ const emptyRow = {
   volume: "",
 };
 
+const API_BASE = "http://localhost:5000/api/stocks";
+
 export default function App() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,31 +22,32 @@ export default function App() {
   const [editIndex, setEditIndex] = useState(null);
   const [editRow, setEditRow] = useState(emptyRow);
 
-  useEffect(() => {
-    setLoading(true);
-    setError("");
+  const fetchRows = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const res = await fetch(API_BASE);
+      const data = await res.json();
 
-    fetch("/stock_market_data.json")
-      .then((res) => res.json())
-      .then((data) => {
-        const cleaned = (Array.isArray(data) ? data : data.data || []).map(
-          (row) => {
-            const d = new Date(row.date);
-            const valid = !isNaN(d.getTime());
-            return {
-              ...row,
-              date: valid ? d.toISOString().slice(0, 10) : row.date,
-            };
-          }
-        );
-
-        setRows(cleaned);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError("Failed to load JSON data");
-        setLoading(false);
+      const cleaned = (Array.isArray(data) ? data : []).map((row) => {
+        const d = new Date(row.date);
+        const valid = !isNaN(d.getTime());
+        return {
+          ...row,
+          date: valid ? d.toISOString().slice(0, 10) : row.date,
+        };
       });
+
+      setRows(cleaned);
+    } catch (err) {
+      setError("Failed to load data from server");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRows();
   }, []);
 
   const handleNewChange = (e) => {
@@ -52,12 +55,36 @@ export default function App() {
     setNewRow((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleAddRow = (e) => {
+  const handleAddRow = async (e) => {
     e.preventDefault();
     if (!newRow.date || !newRow.trade_code) return;
 
-    setRows((prev) => [...prev, newRow]);
-    setNewRow(emptyRow);
+    try {
+      const res = await fetch(API_BASE, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newRow),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to add row");
+      }
+
+      const result = await res.json();
+
+      setRows((prev) => [
+        ...prev,
+        {
+          id: result.id,
+          ...newRow,
+        },
+      ]);
+
+      setNewRow(emptyRow);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to add row. Check server and try again.");
+    }
   };
 
   const handleEditClick = (index) => {
@@ -70,12 +97,43 @@ export default function App() {
     setEditRow((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSaveEdit = (index) => {
-    const updated = [...rows];
-    updated[index] = editRow;
-    setRows(updated);
-    setEditIndex(null);
-    setEditRow(emptyRow);
+  const handleSaveEdit = async (index) => {
+    const rowToUpdate = rows[index];
+    const id = rowToUpdate.id;
+
+    try {
+      const res = await fetch(`${API_BASE}/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: editRow.date,
+          trade_code: editRow.trade_code,
+          open: editRow.open,
+          high: editRow.high,
+          low: editRow.low,
+          close: editRow.close,
+          volume: editRow.volume,
+        }),
+      });
+
+      if (!res.ok) {
+         const text = await res.text();      
+      console.error("Update failed:", res.status, text);
+        throw new Error("Failed to update row");
+      }
+
+      setRows((prev) => {
+        const updated = [...prev];
+        updated[index] = { ...editRow, id };
+        return updated;
+      });
+
+      setEditIndex(null);
+      setEditRow(emptyRow);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update row. Check server and try again.");
+    }
   };
 
   const handleCancelEdit = () => {
@@ -83,8 +141,26 @@ export default function App() {
     setEditRow(emptyRow);
   };
 
-  const handleDeleteRow = (index) => {
-    setRows((prev) => prev.filter((_, i) => i !== index));
+  const handleDeleteRow = async (index) => {
+    const rowToDelete = rows[index];
+    const id = rowToDelete.id;
+
+    if (!window.confirm("Are you sure you want to delete this row?")) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to delete row");
+      }
+
+      setRows((prev) => prev.filter((_, i) => i !== index));
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete row. Check server and try again.");
+    }
   };
 
   if (loading) {
@@ -117,7 +193,7 @@ export default function App() {
         <header className="app-header">
           <div>
             <h1 className="app-title">Stock Market Data</h1>
-            <p className="app-subtitle">JSON Model with Chart and CRUD</p>
+            <p className="app-subtitle">SQL model</p>
           </div>
         </header>
 
@@ -236,7 +312,7 @@ export default function App() {
 
                   return (
                     <tr
-                      key={index}
+                      key={row.id ?? index}
                       className={index % 2 === 0 ? "row-even" : "row-odd"}
                     >
                       <td>
