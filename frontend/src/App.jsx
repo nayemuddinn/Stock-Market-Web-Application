@@ -22,10 +22,14 @@ export default function App() {
   const [editIndex, setEditIndex] = useState(null);
   const [editRow, setEditRow] = useState(emptyRow);
 
+  const [page, setPage] = useState(1);
+  const pageSize = 100;
+
   const fetchRows = async () => {
     try {
       setLoading(true);
       setError("");
+
       const res = await fetch(API_BASE);
       const data = await res.json();
 
@@ -39,6 +43,7 @@ export default function App() {
       });
 
       setRows(cleaned);
+      setPage(1);
     } catch (err) {
       setError("Failed to load data from server");
     } finally {
@@ -72,13 +77,21 @@ export default function App() {
 
       const result = await res.json();
 
-      setRows((prev) => [
-        ...prev,
-        {
-          id: result.id,
-          ...newRow,
-        },
-      ]);
+      setRows((prev) => {
+        const updated = [
+          ...prev,
+          {
+            id: result.id,
+            ...newRow,
+          },
+        ];
+        const newTotalPages = Math.max(
+          1,
+          Math.ceil(updated.length / pageSize)
+        );
+        setPage(newTotalPages);
+        return updated;
+      });
 
       setNewRow(emptyRow);
     } catch (err) {
@@ -117,8 +130,8 @@ export default function App() {
       });
 
       if (!res.ok) {
-         const text = await res.text();      
-      console.error("Update failed:", res.status, text);
+        const text = await res.text();
+        console.error("Update failed:", res.status, text);
         throw new Error("Failed to update row");
       }
 
@@ -153,10 +166,22 @@ export default function App() {
       });
 
       if (!res.ok) {
+        const text = await res.text();
+        console.error("Delete failed:", res.status, text);
         throw new Error("Failed to delete row");
       }
 
-      setRows((prev) => prev.filter((_, i) => i !== index));
+      setRows((prev) => {
+        const updated = prev.filter((_, i) => i !== index);
+        const newTotalPages = Math.max(
+          1,
+          Math.ceil(updated.length / pageSize)
+        );
+        if (page > newTotalPages) {
+          setPage(newTotalPages);
+        }
+        return updated;
+      });
     } catch (err) {
       console.error(err);
       alert("Failed to delete row. Check server and try again.");
@@ -187,13 +212,16 @@ export default function App() {
     );
   }
 
+  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+  const startIndex = (page - 1) * pageSize;
+  const pageRows = rows.slice(startIndex, startIndex + pageSize);
+
   return (
     <div className="app-root">
       <div className="app-container">
         <header className="app-header">
           <div>
             <h1 className="app-title">Stock Market Data</h1>
-            <p className="app-subtitle">SQL model</p>
           </div>
         </header>
 
@@ -287,7 +315,6 @@ export default function App() {
         <section className="panel">
           <div className="table-header">
             <h2 className="section-title">All Records</h2>
-            <p className="table-meta">Total rows: {rows.length}</p>
           </div>
 
           <div className="table-wrapper">
@@ -306,14 +333,17 @@ export default function App() {
               </thead>
 
               <tbody>
-                {rows.map((row, index) => {
-                  const isEditing = editIndex === index;
+                {pageRows.map((row, index) => {
+                  const globalIndex = startIndex + index;
+                  const isEditing = editIndex === globalIndex;
                   const current = isEditing ? editRow : row;
 
                   return (
                     <tr
-                      key={row.id ?? index}
-                      className={index % 2 === 0 ? "row-even" : "row-odd"}
+                      key={row.id ?? globalIndex}
+                      className={
+                        globalIndex % 2 === 0 ? "row-even" : "row-odd"
+                      }
                     >
                       <td>
                         {isEditing ? (
@@ -411,7 +441,7 @@ export default function App() {
                           <>
                             <button
                               className="btn btn-primary btn-sm"
-                              onClick={() => handleSaveEdit(index)}
+                              onClick={() => handleSaveEdit(globalIndex)}
                             >
                               Save
                             </button>
@@ -426,13 +456,13 @@ export default function App() {
                           <>
                             <button
                               className="btn btn-secondary btn-sm"
-                              onClick={() => handleEditClick(index)}
+                              onClick={() => handleEditClick(globalIndex)}
                             >
                               Edit
                             </button>
                             <button
                               className="btn btn-danger btn-sm"
-                              onClick={() => handleDeleteRow(index)}
+                              onClick={() => handleDeleteRow(globalIndex)}
                             >
                               Delete
                             </button>
@@ -444,6 +474,39 @@ export default function App() {
                 })}
               </tbody>
             </table>
+          </div>
+
+          <div
+            style={{
+              marginTop: "10px",
+              textAlign: "center",
+              display: "flex",
+              justifyContent: "center",
+              gap: "10px",
+              fontSize: "12px",
+            }}
+          >
+            <button
+              className="btn btn-secondary btn-sm"
+              disabled={page === 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              Prev
+            </button>
+
+            <span>
+              Page {page} of {totalPages}
+            </span>
+
+            <button
+              className="btn btn-secondary btn-sm"
+              disabled={page === totalPages}
+              onClick={() =>
+                setPage((p) => Math.min(totalPages, p + 1))
+              }
+            >
+              Next
+            </button>
           </div>
         </section>
       </div>
