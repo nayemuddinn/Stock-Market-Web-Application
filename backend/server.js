@@ -3,7 +3,9 @@ const mysql = require("mysql2");
 const cors = require("cors");
 
 const app = express();
+
 app.use(cors());
+app.use(express.json());
 
 const db = mysql.createConnection({
   host: "localhost",
@@ -14,28 +16,70 @@ const db = mysql.createConnection({
 
 db.connect((err) => {
   if (err) {
-    console.error("Database connection failed:", err);
-    return;
+    console.log("DB connection error:", err);
+  } else {
+    console.log("Connected to MySQL");
   }
-  console.log("MySQL connected");
-});
-
-app.get("/", (req, res) => {
-  res.send("API is running");
 });
 
 app.get("/api/stocks", (req, res) => {
-  const sql = "SELECT * FROM stocks";
+  const sql = "SELECT * FROM stocks ORDER BY date ASC, id ASC";
   db.query(sql, (err, results) => {
-    if (err) {
-      console.error("Query error:", err);
-      return res.status(500).json({ error: "Database query failed" });
-    }
+    if (err) return res.status(500).json({ error: err });
     res.json(results);
+  });
+});
+
+app.post("/api/stocks", (req, res) => {
+  const { date, trade_code, open, high, low, close, volume } = req.body;
+
+  const sql =
+    "INSERT INTO stocks (date, trade_code, open, high, low, close, volume) VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+  db.query(
+    sql,
+    [date, trade_code, open, high, low, close, volume],
+    (err, result) => {
+      if (err) return res.status(500).json({ error: err });
+      res.json({
+        message: "Row added",
+        id: result.insertId,
+      });
+    }
+  );
+});
+
+app.put("/api/stocks/:id", (req, res) => {
+  const { id } = req.params;
+  const { date, trade_code, open, high, low, close, volume } = req.body;
+
+  const sql =
+    "UPDATE stocks SET date=?, trade_code=?, open=?, high=?, low=?, close=?, volume=? WHERE id=?";
+
+  db.query(
+    sql,
+    [date, trade_code, open, high, low, close, volume, id],
+    (err, result) => {
+      if (err) {
+           console.log("UPDATE ERROR:", err);  
+           return res.status(500).json({ error: err });}
+      res.json({ message: "Row updated" });
+    }
+  );
+});
+
+app.delete("/api/stocks/:id", (req, res) => {
+  const { id } = req.params;
+
+  const sql = "DELETE FROM stocks WHERE id=?";
+
+  db.query(sql, [id], (err, result) => {
+    if (err) return res.status(500).json({ error: err });
+    res.json({ message: "Row deleted" });
   });
 });
 
 const PORT = 5000;
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log("Server running on port", PORT);
 });
