@@ -3,13 +3,21 @@ body,
 #root {
   margin: 0;
   padding: 0;
-  height: 100%;
+  min-height: 100%;
 }
 
 body {
   background: radial-gradient(circle at top, #1f2937, #020617);
+  background-attachment: fixed;
+  background-size: cover;
 }
 
+#root {
+  min-height: 100%;
+  background: radial-gradient(circle at top, #1f2937, #020617);
+  background-attachment: fixed;
+  background-size: cover;
+}
 
 
 .full-screen {
@@ -25,7 +33,6 @@ body {
   box-sizing: border-box;
 }
 
-
 .app-root {
   min-height: 100vh;
   display: flex;
@@ -37,7 +44,6 @@ body {
   font-family: Arial, sans-serif;
 }
 
-
 .app-container {
   width: 100%;
   max-width: 1400px;
@@ -45,9 +51,6 @@ body {
   margin-right: auto;
   transform: translateX(10px);  
 }
-
-
-
 
 .app-header {
   display: flex;
@@ -67,7 +70,6 @@ body {
   color: #9ca3af;
 }
 
-
 .panel {
   background: linear-gradient(135deg, #111827, #020617);
   border-radius: 16px;
@@ -78,15 +80,11 @@ body {
   box-sizing: border-box;
 }
 
-
-
 .section-title {
   margin: 0 0 10px 0;
   font-size: 18px;
   color: #e5e7eb;
 }
-
-
 
 .chart-card {
   display: flex;
@@ -127,8 +125,6 @@ body {
   font-size: 13px;
 }
 
-
-
 .table-header {
   display: flex;
   justify-content: space-between;
@@ -148,8 +144,6 @@ body {
   border-radius: 10px;
   background: #0b1120;
 }
-
-
 
 .data-table {
   width: 100%;
@@ -186,8 +180,6 @@ body {
   background: rgba(15, 23, 42, 0.6);
 }
 
-
-
 .badge {
   display: inline-block;
   padding: 3px 8px;
@@ -197,8 +189,6 @@ body {
   color: #bfdbfe;
   font-size: 11px;
 }
-
-
 
 .form-row {
   display: grid;
@@ -236,8 +226,6 @@ body {
   display: flex;
   justify-content: flex-end;
 }
-
-
 
 .btn {
   border: none;
@@ -281,7 +269,6 @@ body {
   box-shadow: none;
 }
 
-
 .input-cell {
   width: 100%;
   padding: 5px 7px;
@@ -292,8 +279,6 @@ body {
   font-size: 12px;
   box-sizing: border-box;
 }
-
-
 
 .actions-header {
   white-space: nowrap;

@@ -37,10 +37,8 @@ export default function StockChart({ rows }) {
     <div className="chart-card">
       <div className="chart-header">
         <div>
-          <h2 className="section-title">Price & Volume Overview</h2>
-          <p className="chart-subtitle">
-            Line shows close price, bars show traded volume.
-          </p>
+          <h2 className="section-title">Close & Volume Overview</h2>
+         
         </div>
 
         <div className="chart-controls">
