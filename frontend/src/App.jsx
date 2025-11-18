@@ -25,6 +25,8 @@ export default function App() {
   const [page, setPage] = useState(1);
   const pageSize = 100;
 
+  const [search, setSearch] = useState("");
+
   const fetchRows = async () => {
     try {
       setLoading(true);
@@ -75,34 +77,17 @@ export default function App() {
         throw new Error("Failed to add row");
       }
 
-      const result = await res.json();
-
-      setRows((prev) => {
-        const updated = [
-          ...prev,
-          {
-            id: result.id,
-            ...newRow,
-          },
-        ];
-        const newTotalPages = Math.max(
-          1,
-          Math.ceil(updated.length / pageSize)
-        );
-        setPage(newTotalPages);
-        return updated;
-      });
-
       setNewRow(emptyRow);
+      await fetchRows();
     } catch (err) {
       console.error(err);
       alert("Failed to add row. Check server and try again.");
     }
   };
 
-  const handleEditClick = (index) => {
-    setEditIndex(index);
-    setEditRow(rows[index]);
+  const handleEditClick = (globalIndex) => {
+    setEditIndex(globalIndex);
+    setEditRow(rows[globalIndex]);
   };
 
   const handleEditChange = (e) => {
@@ -110,8 +95,8 @@ export default function App() {
     setEditRow((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSaveEdit = async (index) => {
-    const rowToUpdate = rows[index];
+  const handleSaveEdit = async (globalIndex) => {
+    const rowToUpdate = rows[globalIndex];
     const id = rowToUpdate.id;
 
     try {
@@ -135,14 +120,9 @@ export default function App() {
         throw new Error("Failed to update row");
       }
 
-      setRows((prev) => {
-        const updated = [...prev];
-        updated[index] = { ...editRow, id };
-        return updated;
-      });
-
       setEditIndex(null);
       setEditRow(emptyRow);
+      await fetchRows();
     } catch (err) {
       console.error(err);
       alert("Failed to update row. Check server and try again.");
@@ -154,10 +134,7 @@ export default function App() {
     setEditRow(emptyRow);
   };
 
-  const handleDeleteRow = async (index) => {
-    const rowToDelete = rows[index];
-    const id = rowToDelete.id;
-
+  const handleDeleteRow = async (id) => {
     if (!window.confirm("Are you sure you want to delete this row?")) return;
 
     try {
@@ -171,17 +148,7 @@ export default function App() {
         throw new Error("Failed to delete row");
       }
 
-      setRows((prev) => {
-        const updated = prev.filter((_, i) => i !== index);
-        const newTotalPages = Math.max(
-          1,
-          Math.ceil(updated.length / pageSize)
-        );
-        if (page > newTotalPages) {
-          setPage(newTotalPages);
-        }
-        return updated;
-      });
+      await fetchRows();
     } catch (err) {
       console.error(err);
       alert("Failed to delete row. Check server and try again.");
@@ -212,9 +179,21 @@ export default function App() {
     );
   }
 
-  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+  const normalizedSearch = search.trim().toLowerCase();
+  const filteredRows = normalizedSearch
+    ? rows.filter((row) => {
+        const tc = (row.trade_code || "").toLowerCase();
+        const dt = (row.date || "").toString().toLowerCase();
+        return (
+          tc.includes(normalizedSearch) ||
+          dt.includes(normalizedSearch)
+        );
+      })
+    : rows;
+
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
   const startIndex = (page - 1) * pageSize;
-  const pageRows = rows.slice(startIndex, startIndex + pageSize);
+  const pageRows = filteredRows.slice(startIndex, startIndex + pageSize);
 
   return (
     <div className="app-root">
@@ -315,6 +294,19 @@ export default function App() {
         <section className="panel">
           <div className="table-header">
             <h2 className="section-title">All Records</h2>
+
+            <input
+              type="text"
+              className="form-input"
+              placeholder="Search by trade code or date"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+            style={{ maxWidth: "230px", width: "100%" }}
+
+            />
           </div>
 
           <div className="table-wrapper">
@@ -334,7 +326,9 @@ export default function App() {
 
               <tbody>
                 {pageRows.map((row, index) => {
-                  const globalIndex = startIndex + index;
+                  const globalIndex = rows.findIndex(
+                    (r) => r.id === row.id
+                  );
                   const isEditing = editIndex === globalIndex;
                   const current = isEditing ? editRow : row;
 
@@ -441,7 +435,9 @@ export default function App() {
                           <>
                             <button
                               className="btn btn-primary btn-sm"
-                              onClick={() => handleSaveEdit(globalIndex)}
+                              onClick={() =>
+                                handleSaveEdit(globalIndex)
+                              }
                             >
                               Save
                             </button>
@@ -456,13 +452,17 @@ export default function App() {
                           <>
                             <button
                               className="btn btn-secondary btn-sm"
-                              onClick={() => handleEditClick(globalIndex)}
+                              onClick={() =>
+                                handleEditClick(globalIndex)
+                              }
                             >
                               Edit
                             </button>
                             <button
                               className="btn btn-danger btn-sm"
-                              onClick={() => handleDeleteRow(globalIndex)}
+                              onClick={() =>
+                                handleDeleteRow(row.id)
+                              }
                             >
                               Delete
                             </button>
