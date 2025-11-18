@@ -1,19 +1,13 @@
-# backend/Dockerfile
-FROM node:22-alpine
+FROM python:3.11-slim
 
-# Create app directory
-WORKDIR /usr/src/app
+WORKDIR /app
 
-# Install dependencies
-COPY package*.json ./
-RUN npm install --production
+COPY requirements.txt .
 
-# Copy the rest of the code
+RUN pip install --no-cache-dir -r requirements.txt
+
 COPY . .
-
-# Environment
-ENV PORT=5000
 
 EXPOSE 5000
 
-CMD ["npm", "start"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5000"]
