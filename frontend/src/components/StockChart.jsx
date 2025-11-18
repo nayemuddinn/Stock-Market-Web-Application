@@ -11,98 +11,100 @@ import {
 } from "recharts";
 
 export default function StockChart({ rows }) {
-  if (!rows || rows.length === 0) return null;
-
-  const [selectedCode, setSelectedCode] = useState(rows[0].trade_code);
+  if (!rows || rows.length === 0) {
+    return (
+      <p className="status-text">
+        No data yet. Add some rows to see the chart.
+      </p>
+    );
+  }
 
   const tradeCodes = useMemo(
-    () => [...new Set(rows.map((row) => row.trade_code))],
+    () => Array.from(new Set(rows.map((r) => r.trade_code))).filter(Boolean),
     [rows]
   );
+
+  const [selectedCode, setSelectedCode] = useState(tradeCodes[0]);
 
   const chartData = useMemo(
     () =>
       rows
-        .filter((row) => row.trade_code === selectedCode)
-        .sort((a, b) => new Date(a.date) - new Date(b.date))
-        .map((row) => ({
-          ...row,
-          close: Number(row.close),
-          volume: Number(String(row.volume).replace(/,/g, "")),
+        .filter((r) => r.trade_code === selectedCode)
+        .map((r) => ({
+          ...r,
+          dateLabel: r.date ? r.date.slice(0, 10) : "",
         })),
     [rows, selectedCode]
   );
 
   return (
-    <div className="chart-card">
-      <div className="chart-header">
-        <div>
-          <h2 className="section-title">Close & Volume Overview</h2>
-         
-        </div>
-
-        <div className="chart-controls">
-          <label htmlFor="tradeCodeSelect" className="chart-label">
-            Trade Code
-          </label>
-
-          <select
-            id="tradeCodeSelect"
-            value={selectedCode}
-            onChange={(e) => setSelectedCode(e.target.value)}
-            className="chart-select"
-          >
-            {tradeCodes.map((code) => (
-              <option key={code} value={code}>
-                {code}
-              </option>
-            ))}
-          </select>
-        </div>
+    <div className="chart-wrapper">
+      <div className="form-row">
+        <label className="form-label" htmlFor="tradeCodeSelect">
+          Trade Code
+        </label>
+        <select
+          id="tradeCodeSelect"
+          className="form-input"
+          value={selectedCode}
+          onChange={(e) => setSelectedCode(e.target.value)}
+        >
+          {tradeCodes.map((code) => (
+            <option key={code} value={code}>
+              {code}
+            </option>
+          ))}
+        </select>
       </div>
 
-      <div className="chart-body">
-        <ResponsiveContainer width="100%" height={340}>
-          <ComposedChart data={chartData}>
-            <XAxis
-              dataKey="date"
-              tick={{ fill: "#6b7280", fontSize: 11 }}
-              angle={-30}
-              textAnchor="end"
-            />
-            <YAxis
-              yAxisId="left"
-              tick={{ fill: "#6b7280", fontSize: 11 }}
-              tickLine={false}
-            />
-            <YAxis
-              yAxisId="right"
-              orientation="right"
-              tick={{ fill: "#6b7280", fontSize: 11 }}
-              tickLine={false}
-            />
-
-            <Tooltip />
-            <Legend />
-
-            <Line
-              yAxisId="left"
-              type="monotone"
-              dataKey="close"
-              stroke="#2563eb"
-              dot={false}
-              strokeWidth={2}
-            />
-
-            <Bar
-              yAxisId="right"
-              dataKey="volume"
-              barSize={18}
-              fill="#10b981"
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
-      </div>
+      {chartData.length === 0 ? (
+        <p className="status-text">
+          No data available for <strong>{selectedCode}</strong>.
+        </p>
+      ) : (
+        <div className="chart-inner">
+          <ResponsiveContainer width="100%" height={320}>
+            <ComposedChart data={chartData}>
+              <XAxis dataKey="dateLabel" />
+              <YAxis
+                yAxisId="left"
+                label={{
+                  value: "Close Price",
+                  angle: -90,
+                  position: "insideLeft",
+                }}
+              />
+              <YAxis
+                yAxisId="right"
+                orientation="right"
+                label={{
+                  value: "Volume",
+                  angle: -90,
+                  position: "insideRight",
+                }}
+              />
+              <Tooltip />
+              <Legend />
+              <Line
+                yAxisId="left"
+                type="monotone"
+                dataKey="close"
+                stroke="#38bdf8"
+                strokeWidth={2}
+                dot={false}
+                name="Close"
+              />
+              <Bar
+                yAxisId="right"
+                dataKey="volume"
+                barSize={18}
+                fill="#10b981"
+                name="Volume"
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+      )}
     </div>
   );
 }
