@@ -12,7 +12,8 @@ const emptyRow = {
   volume: "",
 };
 
-const API_BASE = "http://localhost:5000/api/stocks";
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/stocks";
 
 export default function App() {
   const [rows, setRows] = useState([]);
@@ -184,10 +185,7 @@ export default function App() {
     ? rows.filter((row) => {
         const tc = (row.trade_code || "").toLowerCase();
         const dt = (row.date || "").toString().toLowerCase();
-        return (
-          tc.includes(normalizedSearch) ||
-          dt.includes(normalizedSearch)
-        );
+        return tc.includes(normalizedSearch) || dt.includes(normalizedSearch);
       })
     : rows;
 
@@ -304,8 +302,7 @@ export default function App() {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-            style={{ maxWidth: "230px", width: "100%" }}
-
+              style={{ maxWidth: "230px", width: "100%" }}
             />
           </div>
 
@@ -325,10 +322,8 @@ export default function App() {
               </thead>
 
               <tbody>
-                {pageRows.map((row, index) => {
-                  const globalIndex = rows.findIndex(
-                    (r) => r.id === row.id
-                  );
+                {pageRows.map((row) => {
+                  const globalIndex = rows.findIndex((r) => r.id === row.id);
                   const isEditing = editIndex === globalIndex;
                   const current = isEditing ? editRow : row;
 
@@ -435,9 +430,7 @@ export default function App() {
                           <>
                             <button
                               className="btn btn-primary btn-sm"
-                              onClick={() =>
-                                handleSaveEdit(globalIndex)
-                              }
+                              onClick={() => handleSaveEdit(globalIndex)}
                             >
                               Save
                             </button>
@@ -452,17 +445,13 @@ export default function App() {
                           <>
                             <button
                               className="btn btn-secondary btn-sm"
-                              onClick={() =>
-                                handleEditClick(globalIndex)
-                              }
+                              onClick={() => handleEditClick(globalIndex)}
                             >
                               Edit
                             </button>
                             <button
                               className="btn btn-danger btn-sm"
-                              onClick={() =>
-                                handleDeleteRow(row.id)
-                              }
+                              onClick={() => handleDeleteRow(row.id)}
                             >
                               Delete
                             </button>
@@ -501,9 +490,7 @@ export default function App() {
             <button
               className="btn btn-secondary btn-sm"
               disabled={page === totalPages}
-              onClick={() =>
-                setPage((p) => Math.min(totalPages, p + 1))
-              }
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             >
               Next
             </button>
