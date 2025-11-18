@@ -8,10 +8,11 @@ app.use(cors());
 app.use(express.json());
 
 const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "stock_market",
+  host: process.env.MYSQLHOST || "localhost",
+  user: process.env.MYSQLUSER || "root",
+  password: process.env.MYSQLPASSWORD || "",
+  database: process.env.MYSQLDATABASE || "stock_market",
+  port: process.env.MYSQLPORT || 3306,
 });
 
 db.connect((err) => {
@@ -61,8 +62,9 @@ app.put("/api/stocks/:id", (req, res) => {
     [date, trade_code, open, high, low, close, volume, id],
     (err, result) => {
       if (err) {
-           console.log("UPDATE ERROR:", err);  
-           return res.status(500).json({ error: err });}
+        console.log("UPDATE ERROR:", err);
+        return res.status(500).json({ error: err });
+      }
       res.json({ message: "Row updated" });
     }
   );
@@ -79,7 +81,7 @@ app.delete("/api/stocks/:id", (req, res) => {
   });
 });
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log("Server running on port", PORT);
 });
