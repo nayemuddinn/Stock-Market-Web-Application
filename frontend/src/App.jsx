@@ -28,31 +28,42 @@ export default function App() {
 
   const [search, setSearch] = useState("");
 
-  const fetchRows = async () => {
-    try {
-      setLoading(true);
-      setError("");
+const fetchRows = async () => {
+  try {
+    setLoading(true);
+    setError("");
 
-      const res = await fetch(API_BASE);
-      const data = await res.json();
+    console.log("API_BASE =>", API_BASE); // 👈 see what URL you're calling
 
-      const cleaned = (Array.isArray(data) ? data : []).map((row) => {
-        const d = new Date(row.date);
-        const valid = !isNaN(d.getTime());
-        return {
-          ...row,
-          date: valid ? d.toISOString().slice(0, 10) : row.date,
-        };
-      });
+    const res = await fetch(API_BASE);
 
-      setRows(cleaned);
-      setPage(1);
-    } catch (err) {
-      setError("Failed to load data from server");
-    } finally {
-      setLoading(false);
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("HTTP error:", res.status, text);
+      throw new Error(`HTTP ${res.status}`);
     }
-  };
+
+    const data = await res.json();
+
+    const cleaned = (Array.isArray(data) ? data : []).map((row) => {
+      const d = new Date(row.date);
+      const valid = !isNaN(d.getTime());
+      return {
+        ...row,
+        date: valid ? d.toISOString().slice(0, 10) : row.date,
+      };
+    });
+
+    setRows(cleaned);
+    setPage(1);
+  } catch (err) {
+    console.error("Fetch error:", err);
+    setError("Failed to load data from server");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   useEffect(() => {
     fetchRows();
